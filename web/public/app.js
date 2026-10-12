@@ -17,9 +17,15 @@ const els = {
   engineBadge: $("engine-badge"),
 };
 
-const chart = new Charts.Chart($("chart"), { maxTicks: 160 });
-const rsiChart = new Charts.RsiChart($("rsi"), cfg.strategy.rsiPeriod);
-const spark = new Charts.Sparkline($("spark"));
+ChartX.init($("chart"), $("rsi"), $("spark"), {
+  onTfChange: (tf) => {
+    for (const b of document.querySelectorAll("#tf-tabs button"))
+      b.classList.toggle("active", b.dataset.tf === tf);
+  },
+});
+document.querySelectorAll("#tf-tabs button").forEach((b) =>
+  b.addEventListener("click", () => ChartX.setTf(b.dataset.tf))
+);
 
 let state = E.loadState() || E.newState(cfg.engine.initialUsdc);
 let running = false;
@@ -27,7 +33,7 @@ let timer = null;
 let lastPrice = null;
 let lastAction = "—";
 
-const fmt = Charts.fmt;
+const fmt = (v, d = 2) => (v == null || !isFinite(v) ? "—" : v.toFixed(d));
 const usd = (v) => (v == null ? "—" : "$" + fmt(v, v < 10 ? 4 : 2));
 const pct = (v) => (v == null ? "—" : (v >= 0 ? "+" : "") + fmt(v, 2) + "%");
 
@@ -105,12 +111,12 @@ function render() {
     els.posUpnl.style.color = upnl >= 0 ? "var(--up)" : "var(--down)";
     els.posTp.textContent = usd(pos.tp);
     els.posSl.textContent = usd(pos.sl);
-    chart.setLines({ entry: pos.entryPrice, tp: pos.tp, sl: pos.sl });
+    ChartX.setLines({ entry: pos.entryPrice, tp: pos.tp, sl: pos.sl });
   } else {
     els.posBadge.textContent = "FLAT";
     els.posBadge.className = "badge flat";
     for (const e of [els.posSize, els.posEntry, els.posMark, els.posUpnl, els.posTp, els.posSl]) e.textContent = "—";
-    chart.setLines({});
+    ChartX.setLines({});
   }
 
   // signal
@@ -124,9 +130,7 @@ function render() {
   els.actionBadge.className =
     "badge " + (lastAction.startsWith("enter") ? "long" : lastAction.startsWith("hold") ? "hot" : "flat");
 
-  spark.push(state.equityCurve.map((p) => p.equity));
-  rsiChart.pushHistory(state.priceHistory);
-  chart.draw();
+  ChartX.Spark.push(state.equityCurve.map((p) => p.equity));
 }
 
 function renderFills() {
@@ -159,14 +163,13 @@ async function tick() {
     els.chg24.textContent = pct(c);
     els.chg24.className = "chg " + (c >= 0 ? "up" : "down");
   }
-  chart.push(priceData.ts, priceData.price);
+  ChartX.push(priceData.ts, priceData.price);
 
   const out = await E.engineTick(state, priceData.price, quoteFn, cfg);
   lastAction = out.action;
   if (out.fill) {
-    chart.addMarker({
+    ChartX.addMarker({
       t: priceData.ts,
-      price: priceData.price,
       side: out.fill.side,
       action: out.action,
     });
@@ -209,17 +212,19 @@ els.btnReset.addEventListener("click", () => {
   stop();
   E.clearState();
   state = E.newState(cfg.engine.initialUsdc);
-  chart.ticks = [];
-  chart.markers = [];
+  ChartX.clear();
   lastAction = "—";
   renderFills();
   render();
 });
 
-// restore visible history into chart on load
-for (const p of state.priceHistory) chart.push(Date.now() - (state.priceHistory.length - state.priceHistory.indexOf(p)) * cfg.engine.tickIntervalMs, p);
+// restore visible history into chart on load (timestamps reconstructed from tick index)
+const now = Date.now();
+state.priceHistory.forEach((p, i) => {
+  ChartX.push(now - (state.priceHistory.length - 1 - i) * cfg.engine.tickIntervalMs, p);
+});
 for (const f of state.fills) {
-  chart.addMarker({ t: Date.now() - (state.tick - f.tick) * cfg.engine.tickIntervalMs, price: f.price, side: f.side, action: f.action });
+  ChartX.addMarker({ t: now - (state.tick - f.tick) * cfg.engine.tickIntervalMs, side: f.side, action: f.action });
 }
 
 render();

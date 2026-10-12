@@ -1,0 +1,43 @@
+# systemd unit for the paper-engine long-run daemon.
+# Install:
+#   sudo cp paper-engine.service /etc/systemd/system/
+#   # edit WorkingDirectory + ExecStart paths to match your checkout
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now paper-engine
+#
+# Manage:
+#   systemctl status paper-engine
+#   journalctl -u paper-engine -f          # follow live ticks
+#   sudo systemctl restart paper-engine   # state resumes from last tick
+
+[Unit]
+Description=SOL/USDC autonomous paper-trading engine (Jupiter-fed)
+Documentation=https://github.com/khiwniti/sol-paper-trading-engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust to your checkout location.
+WorkingDirectory=/opt/sol-paper-trading-engine
+ExecStart=/opt/sol-paper-trading-engine/target/release/paper-engine live --config config.longrun.toml
+Restart=always
+RestartSec=10
+# Graceful stop: engine saves state on SIGTERM before exiting.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+# Sandboxing
+DynamicUser=yes
+StateDirectory=paper-engine
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+# Engine writes only to its state dir; map it writable.
+ReadWritePaths=/var/lib/paper-engine
+Environment=RUST_LOG=info
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

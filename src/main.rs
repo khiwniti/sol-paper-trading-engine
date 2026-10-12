@@ -99,39 +99,76 @@ async fn run_live(cfg: Config, duration_mins: Option<u64>, interval_ms: Option<u
     let deadline =
         duration_mins.map(|m| tokio::time::Instant::now() + Duration::from_secs(m * 60));
 
-    info!("live mode: tick every {:?}", interval);
+    // Graceful shutdown: save state on SIGTERM/SIGINT so systemd restarts
+    // (Restart=always) resume from the last good tick.
+    let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+    let mut sigint = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt())?;
+    let mut shutdown = false;
+
+    info!("live mode: tick every {:?} (long-run: backoff on feed errors)", interval);
+    let mut backoff_ms: u64 = 0;
+
     loop {
+        tokio::select! {
+            _ = sigterm.recv() => { info!("SIGTERM: shutting down gracefully"); shutdown = true; }
+            _ = sigint.recv() => { info!("SIGINT: shutting down gracefully"); shutdown = true; }
+            _ = tokio::time::sleep(if backoff_ms > 0 { Duration::from_millis(backoff_ms) } else { interval }) => {}
+        }
+        if shutdown {
+            break;
+        }
         if let Some(d) = deadline {
             if tokio::time::Instant::now() >= d {
                 info!("duration reached; shutting down");
                 break;
             }
         }
-        let price = provider.price().await?;
-        let out = engine.act(price, &mut provider).await?;
-        info!(
-            "tick {} price {:.2} score {:.3} {}",
-            out.tick, out.price, out.score, out.action
-        );
-        if let Some(f) = &out.fill {
-            info!(
-                "FILL {} {:.4} -> {:.6} @ {:.4} (fee {:.6})",
-                f.side, f.in_amount, f.out_amount, f.effective_price, f.fee_amount
-            );
-        }
-        if let Some(d) = deadline {
-            let now = tokio::time::Instant::now();
-            if now >= d {
-                info!("duration reached; shutting down");
-                break;
+
+        match provider.price().await {
+            Ok(price) => {
+                backoff_ms = 0; // healthy feed resets backoff
+                match engine.act(price, &mut provider).await {
+                    Ok(out) => {
+                        info!(
+                            "tick {} price {:.2} score {:.3} {}",
+                            out.tick, out.price, out.score, out.action
+                        );
+                        if let Some(f) = &out.fill {
+                            info!(
+                                "FILL {} {:.4} -> {:.6} @ {:.4} (fee {:.6})",
+                                f.side, f.in_amount, f.out_amount, f.effective_price, f.fee_amount
+                            );
+                        }
+                    }
+                    // Engine errors (e.g. quote failure mid-trade) keep state
+                    // consistent: act() saves before failing, so retry is safe.
+                    Err(e) => {
+                        warn!("tick skipped (engine error, will retry): {e:#}");
+                        backoff_ms = next_backoff(backoff_ms);
+                    }
+                }
             }
-            let remaining = (d - now).min(interval);
-            tokio::time::sleep(remaining).await;
-        } else {
-            tokio::time::sleep(interval).await;
+            Err(e) => {
+                warn!("feed error: {e:#}; backing off {}ms", backoff_ms);
+                backoff_ms = next_backoff(backoff_ms);
+            }
         }
     }
+
+    // Final state save on shutdown (act() already saves per-tick; this covers
+    // the case where shutdown lands between fetch and act).
+    engine.state.save(&state_path)?;
+    info!("state saved to {}; run complete", state_path.display());
     Ok(())
+}
+
+/// Exponential backoff schedule: 5s, 10s, 20s, 40s, ... capped at 10min.
+/// Keeps a 24/7 daemon polite when Jupiter is down or rate-limiting.
+fn next_backoff(prev_ms: u64) -> u64 {
+    match prev_ms {
+        0 => 5_000,
+        ms => (ms * 2).min(10 * 60 * 1000),
+    }
 }
 
 async fn run_replay(cfg: Config, csv: &Path, fresh: bool) -> Result<()> {

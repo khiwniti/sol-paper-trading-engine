@@ -1,0 +1,53 @@
+# Long-run / 24x7 daemon profile.
+# Differences vs config.toml (dev default):
+# - 60s ticks: well inside Jupiter lite-api rate limits for continuous running
+# - longer history + horizon so the AI sees more context
+# - state under /var/lib/paper-engine by default when run under systemd
+
+[mints]
+sol = "So11111111111111111111111111111111111111112"
+usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
+[api]
+base_url = "https://lite-api.jup.ag"
+slippage_bps = 20
+
+[engine]
+tick_interval_ms = 60000
+history_len = 288                 # 288 x 60s = ~4.8h rolling window
+initial_usdc = 1000.0
+state_path = "state/paper_state.json"
+fills_path = "state/fills.jsonl"
+equity_path = "state/equity.jsonl"
+
+[strategy]
+ema_fast = 9
+ema_slow = 21
+rsi_period = 14
+rsi_overbought = 72.0
+rsi_oversold = 28.0
+momentum_ticks = 20
+rule_weight = 0.6
+entry_score = 0.35
+exit_score = -0.25
+
+[ai]
+learning_rate = 0.05
+l2 = 0.0001
+horizon_ticks = 10
+up_move_bps = 20
+ai_weight = 0.4
+
+[risk]
+stop_loss_bps = 200
+take_profit_bps = 400
+cooldown_ticks = 10
+base_position_pct = 0.30
+max_position_pct = 0.60
+min_order_usdc = 10.0
+reserve_usdc = 5.0
+max_drawdown_pct = 15.0
+
+[fees]
+fee_bps = 10
+replay_slippage_bps = 5

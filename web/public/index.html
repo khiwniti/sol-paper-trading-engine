@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f4f6fb" />
 <title>SOL/USDC Paper Trader — Autonomous Engine</title>
-<meta name="description" content="Professional SOL/USDC paper-trading terminal: real-time Jupiter prices, autonomous AI signals, TP/SL execution." />
+<meta name="description" content="Professional SOL/USDC paper-trading terminal: real-time Jupiter prices, candlestick chart with timeframes, autonomous AI signals, TP/SL execution." />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -26,7 +27,7 @@
   <div class="stats">
     <div class="stat"><label>Equity</label><span id="equity">—</span></div>
     <div class="stat"><label>Peak</label><span id="peak">—</span></div>
-    <div class="stat"><label>PnL</label><span id="pnl">—</span></div>
+    <div class="stat"><label>PnL</label><span id="pnl" class="chg">—</span></div>
     <div class="stat"><label>Tick</label><span id="tick">0</span></div>
   </div>
 </header>
@@ -34,25 +35,29 @@
 <main>
   <section class="panel chart-panel">
     <div class="panel-head">
-      <h2>Price & Signals</h2>
+      <h2>SOL/USDC</h2>
+      <div class="tf-tabs" id="tf-tabs">
+        <button data-tf="1m" class="active">1m</button>
+        <button data-tf="5m">5m</button>
+        <button data-tf="15m">15m</button>
+        <button data-tf="1h">1h</button>
+      </div>
       <div class="legend">
-        <span><i class="sw" style="background:#38bdf8"></i>EMA 9</span>
+        <span><i class="sw" style="background:#0ea5e9"></i>EMA 9</span>
         <span><i class="sw" style="background:#f59e0b"></i>EMA 21</span>
-        <span><i class="sw" style="background:#a78bfa"></i>Entry</span>
-        <span><i class="sw" style="background:#22c55e"></i>TP</span>
-        <span><i class="sw" style="background:#ef4444"></i>SL</span>
+        <span><i class="sw" style="background:#7c3aed"></i>Entry</span>
+        <span><i class="sw" style="background:#16a34a"></i>TP</span>
+        <span><i class="sw" style="background:#dc2626"></i>SL</span>
       </div>
     </div>
-    <canvas id="chart"></canvas>
-    <div class="panel-head sub-head">
-      <h2>RSI 14</h2>
-    </div>
-    <canvas id="rsi"></canvas>
+    <div id="chart"></div>
+    <div class="panel-head sub-head"><h2>RSI 14</h2></div>
+    <div id="rsi"></div>
   </section>
 
   <aside class="rail">
     <section class="panel pos-panel">
-      <div class="panel-head"><h2>Position</h2><span id="pos-badge" class="badge flat">FLAT</span></div>
+      <div class="panel-head"><h2>Position</h2><span id="pos-badge" class="badge">FLAT</span></div>
       <div class="pos-grid">
         <div><label>Size</label><span id="pos-size">—</span></div>
         <div><label>Entry</label><span id="pos-entry">—</span></div>
@@ -65,17 +70,15 @@
 
     <section class="panel">
       <div class="panel-head"><h2>Signal</h2><span id="action-badge" class="badge">—</span></div>
-      <div class="sig">
-        <div class="sigbar-wrap">
-          <div id="sigbar" class="sigbar"><div id="sigfill"></div><i id="sigmark"></i></div>
-          <div class="siglabels"><span>-1</span><span>0</span><span>+1</span></div>
-        </div>
-        <div class="sig-grid">
-          <div><label>Rule</label><span id="sig-rule">—</span></div>
-          <div><label>AI P(up)</label><span id="sig-ai">—</span></div>
-          <div><label>Blend</label><span id="sig-blend">—</span></div>
-          <div><label>AI trained</label><span id="ai-count">0</span></div>
-        </div>
+      <div class="sigbar-wrap">
+        <div class="sigbar"><div id="sigfill"></div><i id="sigmark"></i></div>
+        <div class="siglabels"><span>-1</span><span>0</span><span>+1</span></div>
+      </div>
+      <div class="sig-grid">
+        <div><label>Rule</label><span id="sig-rule">—</span></div>
+        <div><label>AI P(up)</label><span id="sig-ai">—</span></div>
+        <div><label>Blend</label><span id="sig-blend">—</span></div>
+        <div><label>AI trained</label><span id="ai-count">0</span></div>
       </div>
     </section>
 
@@ -91,14 +94,14 @@
         <button id="btn-reset" class="btn danger" title="Reset paper wallet">Reset</button>
       </div>
       <div class="ctl-row">
-        <label class="inline">Interval</label>
+        <label class="inline" for="interval">Interval</label>
         <select id="interval">
           <option value="10000">10s</option>
           <option value="30000" selected>30s</option>
           <option value="60000">60s</option>
         </select>
       </div>
-      <p class="hint">Engine decides each tick: exits first (SL/TP/signal), then entries gated by cooldown & drawdown halt. Fills use live Jupiter routed quotes.</p>
+      <p class="hint">Engine decides each tick: exits first (SL/TP/signal), then entries gated by cooldown & drawdown halt. Fills use live Jupiter routed quotes. Chart candles aggregate ticks into the selected timeframe.</p>
     </section>
   </aside>
 
@@ -115,9 +118,10 @@
 
 <footer>
   <p>Paper trading only — simulated fills against real Jupiter quotes. Not investment advice.</p>
-  <p class="dim">Engine state persists in your browser (localStorage). <a href="/api/health" target="_blank">API status</a></p>
+  <p class="dim">State persists in your browser · <a href="/api/health" target="_blank">API status</a></p>
 </footer>
 
+<script src="lightweight-charts.standalone.production.js"></script>
 <script src="engine.js"></script>
 <script src="chart.js"></script>
 <script src="app.js"></script>
