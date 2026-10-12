@@ -1,0 +1,10 @@
+{
+  "name": "sol-paper-trading-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Professional SOL/USDC paper-trading interface with real-time Jupiter prices, TP/SL, order execution and signal chart — deployed on Vercel.",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "deploy": "vercel deploy --prod"
+  }
+}

@@ -1,0 +1,7 @@
+# state/ contains paper-trading state and logs — never commit
+state/
+.env
+.env.local
+.vercel
+node_modules/
+target/

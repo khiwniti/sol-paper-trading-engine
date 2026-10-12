@@ -1,0 +1,32 @@
+[package]
+name = "paper-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Autonomous SOL/USDC paper-trading engine: Jupiter-fed prices, rule + online-learning signal ensemble, risk-managed fills."
+license = "MIT"
+
+[lib]
+name = "paper_engine"
+
+
+[[bin]]
+name = "paper-engine"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "signal"] }
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+lto = "thin"

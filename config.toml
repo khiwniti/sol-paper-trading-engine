@@ -1,0 +1,50 @@
+# SOL/USDC autonomous paper-trading engine configuration.
+# All values are defaulted in code; this file overrides them.
+
+[mints]
+sol = "So11111111111111111111111111111111111111112"   # wrapped SOL
+usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # native USDC
+
+[api]
+base_url = "https://lite-api.jup.ag"  # Jupiter free lite API
+slippage_bps = 20                     # passed to /swap/v1/quote
+
+[engine]
+tick_interval_ms = 30000              # live polling cadence
+history_len = 120                     # rolling price window kept for indicators/state
+initial_usdc = 1000.0
+state_path = "state/paper_state.json"
+fills_path = "state/fills.jsonl"
+equity_path = "state/equity.jsonl"
+
+[strategy]
+ema_fast = 9
+ema_slow = 21
+rsi_period = 14
+rsi_overbought = 72.0                 # no fresh longs above this
+rsi_oversold = 28.0                    # stand aside below this on weak trend
+momentum_ticks = 20
+rule_weight = 0.6                      # weight of the rule signal in the score
+entry_score = 0.35                     # buy when blended score >= this
+exit_score = -0.25                      # exit long when blended score <= this
+
+[ai]
+learning_rate = 0.05                   # per-sample SGD step
+l2 = 0.0001
+horizon_ticks = 10                     # label horizon: did price rise after N ticks?
+up_move_bps = 20                       # what counts as "up" (0.2%)
+ai_weight = 0.4                        # weight of the model probability in the score
+
+[risk]
+stop_loss_bps = 200                    # -2% vs entry
+take_profit_bps = 400                  # +4% vs entry
+cooldown_ticks = 10                    # no re-entry for N ticks after a losing exit
+base_position_pct = 0.30               # of equity at conviction 0.5
+max_position_pct = 0.60                # hard cap of equity per position
+min_order_usdc = 10.0
+reserve_usdc = 5.0                     # USDC never deployed
+max_drawdown_pct = 15.0                # halt new entries when peak->equity drawdown exceeds this
+
+[fees]
+fee_bps = 10                           # modeled execution fee, applied to quote output
+replay_slippage_bps = 5                # synthetic slippage applied in replay fills

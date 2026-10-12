@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SOL/USDC Paper Trader — Autonomous Engine</title>
+<meta name="description" content="Professional SOL/USDC paper-trading terminal: real-time Jupiter prices, autonomous AI signals, TP/SL execution." />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <div>
+      <h1>SOL / USDC <span class="tag">PAPER</span></h1>
+      <p class="sub">autonomous engine · jupiter-routed fills</p>
+    </div>
+  </div>
+  <div class="ticker">
+    <div class="px"><span id="price">—</span><span class="cur">USDC</span></div>
+    <div class="meta">
+      <span id="chg24" class="chg">—</span>
+      <span id="conn" class="conn dot-off">● offline</span>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><label>Equity</label><span id="equity">—</span></div>
+    <div class="stat"><label>Peak</label><span id="peak">—</span></div>
+    <div class="stat"><label>PnL</label><span id="pnl">—</span></div>
+    <div class="stat"><label>Tick</label><span id="tick">0</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel chart-panel">
+    <div class="panel-head">
+      <h2>Price & Signals</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:#38bdf8"></i>EMA 9</span>
+        <span><i class="sw" style="background:#f59e0b"></i>EMA 21</span>
+        <span><i class="sw" style="background:#a78bfa"></i>Entry</span>
+        <span><i class="sw" style="background:#22c55e"></i>TP</span>
+        <span><i class="sw" style="background:#ef4444"></i>SL</span>
+      </div>
+    </div>
+    <canvas id="chart"></canvas>
+    <div class="panel-head sub-head">
+      <h2>RSI 14</h2>
+    </div>
+    <canvas id="rsi"></canvas>
+  </section>
+
+  <aside class="rail">
+    <section class="panel pos-panel">
+      <div class="panel-head"><h2>Position</h2><span id="pos-badge" class="badge flat">FLAT</span></div>
+      <div class="pos-grid">
+        <div><label>Size</label><span id="pos-size">—</span></div>
+        <div><label>Entry</label><span id="pos-entry">—</span></div>
+        <div><label>Mark</label><span id="pos-mark">—</span></div>
+        <div><label>uPnL</label><span id="pos-upnl">—</span></div>
+        <div><label>Take Profit</label><span id="pos-tp">—</span></div>
+        <div><label>Stop Loss</label><span id="pos-sl">—</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Signal</h2><span id="action-badge" class="badge">—</span></div>
+      <div class="sig">
+        <div class="sigbar-wrap">
+          <div id="sigbar" class="sigbar"><div id="sigfill"></div><i id="sigmark"></i></div>
+          <div class="siglabels"><span>-1</span><span>0</span><span>+1</span></div>
+        </div>
+        <div class="sig-grid">
+          <div><label>Rule</label><span id="sig-rule">—</span></div>
+          <div><label>AI P(up)</label><span id="sig-ai">—</span></div>
+          <div><label>Blend</label><span id="sig-blend">—</span></div>
+          <div><label>AI trained</label><span id="ai-count">0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Equity</h2><span id="ret" class="chg">—</span></div>
+      <canvas id="spark" class="spark"></canvas>
+    </section>
+
+    <section class="panel controls">
+      <div class="panel-head"><h2>Engine</h2><span id="engine-badge" class="badge off">STOPPED</span></div>
+      <div class="ctl-row">
+        <button id="btn-run" class="btn primary">▶ Start engine</button>
+        <button id="btn-reset" class="btn danger" title="Reset paper wallet">Reset</button>
+      </div>
+      <div class="ctl-row">
+        <label class="inline">Interval</label>
+        <select id="interval">
+          <option value="10000">10s</option>
+          <option value="30000" selected>30s</option>
+          <option value="60000">60s</option>
+        </select>
+      </div>
+      <p class="hint">Engine decides each tick: exits first (SL/TP/signal), then entries gated by cooldown & drawdown halt. Fills use live Jupiter routed quotes.</p>
+    </section>
+  </aside>
+
+  <section class="panel fills-panel">
+    <div class="panel-head"><h2>Execution Log</h2><span id="fill-count" class="dim">0 fills</span></div>
+    <div class="table-wrap">
+      <table id="fills">
+        <thead><tr><th>Tick</th><th>Action</th><th>Side</th><th>In</th><th>Out</th><th>Eff. price</th><th>Fee</th><th>Route</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Paper trading only — simulated fills against real Jupiter quotes. Not investment advice.</p>
+  <p class="dim">Engine state persists in your browser (localStorage). <a href="/api/health" target="_blank">API status</a></p>
+</footer>
+
+<script src="engine.js"></script>
+<script src="chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
