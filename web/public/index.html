@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f4f6fb" />
+<meta name="theme-color" content="#f8fafc" />
 <title>SOL/USDC Paper Trader · Autonomous Engine</title>
-<meta name="description" content="Professional SOL/USDC paper-trading terminal: real-time Jupiter prices, candlestick chart with timeframes, autonomous AI signals, TP/SL execution." />
+<meta name="description" content="Autonomous SOL/USDC paper-trading terminal: real Jupiter prices, AI signals, TP/SL position engine, execution history." />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,7 +13,7 @@
   <div class="brand">
     <span class="logo">◈</span>
     <div>
-      <h1>SOL / USDC <span class="tag">PAPER</span></h1>
+      <h1>SolAI <span class="tag">PAPER</span></h1>
       <p class="sub">autonomous engine · jupiter-routed fills</p>
     </div>
   </div>
@@ -24,18 +24,24 @@
       <span id="conn" class="conn dot-off">● offline</span>
     </div>
   </div>
+  <div class="stream-ctl">
+    <button id="btn-run" class="btn primary">▶ Start engine</button>
+    <button id="btn-reset" class="btn ghost" title="Reset paper wallet">Reset</button>
+  </div>
   <div class="stats">
-    <div class="stat"><label>Equity</label><span id="equity">—</span></div>
-    <div class="stat"><label>Peak</label><span id="peak">—</span></div>
-    <div class="stat"><label>PnL</label><span id="pnl" class="chg">—</span></div>
-    <div class="stat"><label>Tick</label><span id="tick">0</span></div>
+    <div class="stat"><label>Net Worth</label><span id="equity">—</span></div>
+    <div class="stat"><label>USDC Balance</label><span id="usdc-bal">—</span></div>
+    <div class="stat"><label>SOL Balance</label><span id="sol-bal">—</span></div>
+    <div class="stat"><label>Total P&L</label><span id="pnl" class="chg">—</span></div>
+    <div class="stat"><label>Win Rate</label><span id="winrate" class="violet">—</span></div>
+    <div class="stat"><label>Total Trades</label><span id="trade-count" class="sky">0</span></div>
   </div>
 </header>
 
 <main>
   <section class="panel chart-panel">
-    <div class="panel-head">
-      <h2>SOL/USDC</h2>
+    <div class="panel-head grad-violet">
+      <h2>SOL/USDC · Live Market</h2>
       <div class="tf-tabs" id="tf-tabs">
         <button data-tf="1m" class="active">1m</button>
         <button data-tf="5m">5m</button>
@@ -47,7 +53,7 @@
         <span><i class="sw" style="background:#f59e0b"></i>EMA 21</span>
         <span><i class="sw" style="background:#7c3aed"></i>Entry</span>
         <span><i class="sw" style="background:#16a34a"></i>TP</span>
-        <span><i class="sw" style="background:#dc2626"></i>SL</span>
+        <span><i class="sw" style="background:#b91c1c"></i>SL</span>
       </div>
     </div>
     <div id="chart"></div>
@@ -56,57 +62,62 @@
   </section>
 
   <aside class="rail">
-    <section class="panel pos-panel">
-      <div class="panel-head"><h2>Position</h2><span id="pos-badge" class="badge">FLAT</span></div>
-      <div class="pos-grid">
-        <div><label>Size</label><span id="pos-size">—</span></div>
-        <div><label>Entry</label><span id="pos-entry">—</span></div>
-        <div><label>Mark</label><span id="pos-mark">—</span></div>
-        <div><label>uPnL</label><span id="pos-upnl">—</span></div>
-        <div><label>Take Profit</label><span id="pos-tp">—</span></div>
-        <div><label>Stop Loss</label><span id="pos-sl">—</span></div>
-      </div>
-    </section>
-
     <section class="panel">
-      <div class="panel-head"><h2>Signal</h2><span id="action-badge" class="badge">—</span></div>
+      <div class="panel-head grad-sky">
+        <h2>Autonomous Agent</h2>
+        <span id="engine-badge" class="badge off">STOPPED</span>
+      </div>
+      <div class="agent-grid">
+        <div class="field"><label>Strategy</label><span class="val">EMA + RSI + Online AI</span></div>
+        <div class="field"><label>Risk</label><span class="val">TP/SL + cooldown + drawdown halt</span></div>
+        <div class="field"><label>Interval</label>
+          <select id="interval">
+            <option value="10000">10s</option>
+            <option value="30000" selected>30s</option>
+            <option value="60000">60s</option>
+          </select>
+        </div>
+        <div class="field"><label>AI trained</label><span id="ai-count" class="val">0 samples</span></div>
+        <div class="field"><label>Blend score</label><span id="sig-blend" class="val">—</span></div>
+        <div class="field"><label>AI P(up)</label><span id="sig-ai" class="val">—</span></div>
+      </div>
       <div class="sigbar-wrap">
         <div class="sigbar"><div id="sigfill"></div><i id="sigmark"></i></div>
-        <div class="siglabels"><span>-1</span><span>0</span><span>+1</span></div>
-      </div>
-      <div class="sig-grid">
-        <div><label>Rule</label><span id="sig-rule">—</span></div>
-        <div><label>AI P(up)</label><span id="sig-ai">—</span></div>
-        <div><label>Blend</label><span id="sig-blend">—</span></div>
-        <div><label>AI trained</label><span id="ai-count">0</span></div>
+        <div class="siglabels"><span>−1</span><span>0</span><span>+1</span></div>
       </div>
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2>Equity</h2><span id="ret" class="chg">—</span></div>
-      <canvas id="spark" class="spark"></canvas>
-    </section>
-
-    <section class="panel controls">
-      <div class="panel-head"><h2>Engine</h2><span id="engine-badge" class="badge off">STOPPED</span></div>
-      <div class="ctl-row">
-        <button id="btn-run" class="btn primary">▶ Start engine</button>
-        <button id="btn-reset" class="btn danger" title="Reset paper wallet">Reset</button>
+      <div class="panel-head grad-violet">
+        <h2>Signals & Routes</h2>
       </div>
-      <div class="ctl-row">
-        <label class="inline" for="interval">Interval</label>
-        <select id="interval">
-          <option value="10000">10s</option>
-          <option value="30000" selected>30s</option>
-          <option value="60000">60s</option>
-        </select>
+      <div class="tab-pill">
+        <button id="tab-signals" class="active">SIGNALS</button>
+        <button id="tab-routes">ROUTES</button>
       </div>
-      <p class="hint">Engine decides each tick: exits first (SL/TP/signal), then entries gated by cooldown & drawdown halt. Fills use live Jupiter routed quotes. Chart candles aggregate ticks into the selected timeframe.</p>
+      <div id="signals-list" class="feed"></div>
+      <div id="routes-list" class="feed" hidden></div>
     </section>
   </aside>
 
-  <section class="panel fills-panel">
-    <div class="panel-head"><h2>Execution Log</h2><span id="fill-count" class="dim">0 fills</span></div>
+  <section class="panel pos-panel">
+    <div class="panel-head grad-emerald">
+      <h2>Position Engine</h2>
+      <span id="pos-badge" class="badge">FLAT</span>
+    </div>
+    <div id="open-pos" class="pos-open"></div>
+    <div id="closed-pos" class="pos-closed"></div>
+  </section>
+
+  <section class="panel hist-panel">
+    <div class="panel-head grad-slate">
+      <h2>Trade History</h2>
+      <div class="tab-pill">
+        <button data-hf="ALL" class="active">ALL</button>
+        <button data-hf="buy">BUY</button>
+        <button data-hf="sell">SELL</button>
+      </div>
+    </div>
     <div class="table-wrap">
       <table id="fills">
         <thead><tr><th>Tick</th><th>Action</th><th>Side</th><th>In</th><th>Out</th><th>Eff. price</th><th>Fee</th><th>Route</th></tr></thead>
