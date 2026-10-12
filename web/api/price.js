@@ -1,7 +1,7 @@
 // GET /api/price — cached Jupiter mid-market price proxy.
-// Lite-api is rate-limited; the 5s edge cache keeps the browser poller polite.
+// Jupiter api.jup.ag gateway (lite-api is being retired); 5s edge cache keeps polling polite.
 const SOL = "So11111111111111111111111111111111111111112";
-const UPSTREAM = "https://lite-api.jup.ag/price/v3";
+const UPSTREAM = "https://api.jup.ag/price/v3";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "s-maxage=5, stale-while-revalidate=10");

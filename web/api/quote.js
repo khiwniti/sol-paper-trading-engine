@@ -3,7 +3,7 @@
 // price impact, so paper fills track true executable prices.
 const SOL = "So11111111111111111111111111111111111111112";
 const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const UPSTREAM = "https://lite-api.jup.ag/swap/v1/quote";
+const UPSTREAM = "https://api.jup.ag/swap/v1/quote";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");

@@ -16,11 +16,10 @@ Documentation=https://github.com/khiwniti/sol-paper-trading-engine
 After=network-online.target
 Wants=network-online.target
 
-[Service]
 Type=simple
 # Adjust to your checkout location.
 WorkingDirectory=/opt/sol-paper-trading-engine
-ExecStart=/opt/sol-paper-trading-engine/target/release/paper-engine live --config config.longrun.toml
+ExecStart=/opt/sol-paper-trading-engine/target/release/paper-engine --config config.longrun.toml live
 Restart=always
 RestartSec=10
 # Graceful stop: engine saves state on SIGTERM before exiting.

@@ -15,13 +15,12 @@ STATE_DIR="/var/lib/paper-engine"
 
 # Point the unit at this checkout.
 sed "s#^WorkingDirectory=.*#WorkingDirectory=$REPO_DIR#" "$SERVICE_SRC" > "$SERVICE_DST"
-sed -i "s#^ExecStart=.*#ExecStart=$REPO_DIR/target/release/paper-engine live --config $REPO_DIR/config.longrun.toml#" "$SERVICE_DST"
 
 # Long-run profile stores state under the systemd state dir by default;
 # map that path writable in the unit and point the config at it.
 sed -i "s#^ReadWritePaths=.*#ReadWritePaths=$STATE_DIR#" "$SERVICE_DST"
 mkdir -p "$STATE_DIR"
-mkdir -p "$REPO_DIR/state"
+sed -i "s#^ExecStart=.*#ExecStart=$REPO_DIR/target/release/paper-engine --config $REPO_DIR/config.longrun.toml live#" "$SERVICE_DST"
 
 systemctl daemon-reload
 systemctl enable --now paper-engine

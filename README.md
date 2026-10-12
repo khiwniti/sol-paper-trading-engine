@@ -60,7 +60,10 @@ backtesting + a Vercel-deployed web interface.
 │   ├── api/                #   serverless functions (price, quote, health)
 │   └── public/             #   SPA: chart.js, engine.js (JS port), app.js
 ├── data/                   # sample CSV for replay backtests
-└── config.toml             # engine configuration
+├── config.toml             # engine configuration (dev)
+├── config.longrun.toml     # 24x7 daemon profile (60s ticks)
+├── paper-engine.service    # systemd unit for long-run operation
+└── scripts/install-service.sh  # one-command service installer
 ```
 
 ## Rust engine — quick start
@@ -79,20 +82,53 @@ cargo run --release -- status
 cargo run --release -- reset
 ```
 
-`cargo test` — 22 tests: trend entry, take-profit, crash stop-loss, cooldown
-stand-down, drawdown halt, sizing caps, fee math, state roundtrip, AI convergence.
+## Long-run operation (24/7 daemon)
+
+The engine is built for unattended continuous running:
+
+- **Feed errors never kill the daemon** — transient Jupiter failures back off
+  exponentially (5s → 10s → … capped at 10 min) and resume automatically.
+- **Graceful shutdown** — SIGTERM/SIGINT save state before exit, so a systemd
+  `Restart=always` cycle resumes from the last good tick.
+- **State-resume** — verified: stop at tick N, restart, continue at tick N+1.
+
+```bash
+# Run directly (60s ticks, rate-limit-friendly profile)
+cargo run --release -- --config config.longrun.toml live
+
+# Or install as a systemd service (auto-start on boot, auto-restart on crash)
+cargo build --release
+sudo ./scripts/install-service.sh
+journalctl -u paper-engine -f     # follow live ticks
+```
+
+## Production notes (researched stack choices)
+
+- **Jupiter API**: uses `api.jup.ag` (the official gateway). `lite-api.jup.ag`
+  is being phased out with progressively reduced rate limits. For sustained
+  24/7 polling, [get a free API key](https://dev.jup.ag) (1 RPS free tier;
+  $25/mo Developer tier for more) and add it per Jupiter's docs.
+- **Charts**: the web terminal uses **TradingView Lightweight Charts v5** —
+  the industry-standard open-source library (17k★, 35KB) — with real OHLC
+  candles, 1m/5m/15m/1h timeframes, crosshair, zoom/pan, price lines and
+  trade markers.
+- **Beyond paper trading** (execution stack used by production Solana
+  systems): Yellowstone gRPC (Geyser) for sub-block price streams, Jito
+  bundles for execution, and engines like NautilusTrader as a reference
+  architecture for deterministic event-driven design. This repo's paper
+  engine is a stepping stone toward that stack.
 
 ## Web terminal
 
 Deployed on Vercel (API functions proxy Jupiter; SPA runs the engine client-side with
 localStorage persistence — your paper wallet lives in your browser).
+Light theme, fully responsive, timeframe-switchable candlestick chart.
 
 ```bash
 cd web
 npm run dev        # local static preview
 npm run deploy     # vercel --prod
 ```
-
 ## Configuration
 
 Every knob lives in `config.toml` (Rust) / `DEFAULTS` in `web/public/engine.js` (web):

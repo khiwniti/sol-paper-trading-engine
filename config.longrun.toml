@@ -9,7 +9,7 @@ sol = "So11111111111111111111111111111111111111112"
 usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 [api]
-base_url = "https://lite-api.jup.ag"
+base_url = "https://api.jup.ag"
 slippage_bps = 20
 
 [engine]

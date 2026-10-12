@@ -111,7 +111,7 @@ impl Default for MintsCfg {
 
 impl Default for ApiCfg {
     fn default() -> Self {
-        Self { base_url: "https://lite-api.jup.ag".to_string(), slippage_bps: 20 }
+        Self { base_url: "https://api.jup.ag".to_string(), slippage_bps: 20 }
     }
 }
 

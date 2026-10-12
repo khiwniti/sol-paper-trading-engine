@@ -6,7 +6,7 @@ sol = "So11111111111111111111111111111111111111112"   # wrapped SOL
 usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # native USDC
 
 [api]
-base_url = "https://lite-api.jup.ag"  # Jupiter free lite API
+base_url = "https://api.jup.ag"     # Jupiter API gateway (lite-api is being retired)
 slippage_bps = 20                     # passed to /swap/v1/quote
 
 [engine]
