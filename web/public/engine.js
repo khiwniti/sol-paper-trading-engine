@@ -1,8 +1,7 @@
-// [BOOT] engine.js executing
+// paper-engine (JS port): faithful browser port of the Rust engine.
+// Signals, online AI, risk, broker fills and persistence match src/*.rs 1:1.
+
 "use strict";
-console.log("[BOOT] engine.js executed, defining window.PaperEngine");
-
-
 const DEFAULTS = {
   mints: {
     sol: "So11111111111111111111111111111111111111112",

@@ -1,5 +1,4 @@
-console.log("[BOOT] chart.js executed, defining window.Charts");
-// price lines, fill markers, RSI pane, equity sparkline. No dependencies.
+// chart.js — lightweight canvas chart: candles + EMA overlays, entry/TP/SL price lines, fill markers, RSI pane, equity sparkline. No dependencies.
 
 "use strict";
 

@@ -1,5 +1,4 @@
 // app.js — glue: price polling, engine loop, UI binding.
-console.log("[BOOT] app.js executed, binding UI");
 
 const E = window.PaperEngine;
 const cfg = structuredClone(E.DEFAULTS);
